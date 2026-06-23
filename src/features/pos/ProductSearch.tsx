@@ -12,6 +12,7 @@ import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { getCachedProductByBarcode, searchCachedProducts } from '@/db/catalog';
 import { apiErrorMessage } from '@/lib/apiError';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import type { Product } from '@/types/api';
 
 interface ProductSearchProps {
@@ -122,6 +123,9 @@ export function ProductSearch({ onPick }: ProductSearchProps) {
       )}
 
       <div className="flex flex-col gap-1.5">
+        {loading && products.length === 0 &&
+          [0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
+
         <AnimatePresence initial={false}>
           {products.map((p) => (
             <motion.button

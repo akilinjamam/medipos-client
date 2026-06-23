@@ -11,6 +11,7 @@ import { Modal } from '@/components/ui/modal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import type { Customer } from '@/types/api';
 
 interface CustomerPickerProps {
@@ -112,6 +113,10 @@ export function CustomerPicker({ open, onClose, onPick }: CustomerPickerProps) {
           {isError && <p className="text-sm text-destructive">{apiErrorMessage(error)}</p>}
 
           <div className="flex max-h-64 flex-col gap-1.5 overflow-y-auto">
+            {isFetching &&
+              !customers &&
+              [0, 1, 2].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
+
             {customers?.map((c) => (
               <button
                 key={c._id}

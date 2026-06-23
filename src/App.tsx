@@ -1,12 +1,15 @@
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { useAppDispatch } from '@/store/hooks';
 import { setInitializing } from '@/features/auth/authSlice';
 import { authApi } from '@/features/auth/authApi';
 import { ProtectedRoute } from '@/router/ProtectedRoute';
-import LoginPage from '@/pages/LoginPage';
-import PosPage from '@/pages/PosPage';
+
+// Route-level code splitting: the heavy POS screen (cart, offline, sales, PDF/
+// print, etc.) loads as its own chunk, separate from the login/boot path.
+const LoginPage = lazy(() => import('@/pages/LoginPage'));
+const PosPage = lazy(() => import('@/pages/PosPage'));
 
 export default function App() {
   const dispatch = useAppDispatch();
@@ -33,13 +36,21 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route element={<ProtectedRoute />}>
-          <Route path="/" element={<PosPage />} />
-        </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      <Suspense
+        fallback={
+          <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
+            Loading…
+          </div>
+        }
+      >
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route element={<ProtectedRoute />}>
+            <Route path="/" element={<PosPage />} />
+          </Route>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
       <Toaster richColors position="top-center" />
     </BrowserRouter>
   );

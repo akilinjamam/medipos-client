@@ -48,6 +48,7 @@
 - [x] Recent sales list (`GET /api/v1/sales`) and sale detail (`GET /api/v1/sales/:id`) — `RecentSales` modal (header "Recent sales"), paginated newest-first, drill into line items + invoice reprint
 - [x] **Customer quick-attach / quick-create** (`GET /api/v1/customers?search=`, `POST /api/v1/customers`) for due/credit sales
 - [x] Keyboard shortcuts (add item, qty, pay, new sale) — `F2` focus search · scan/Enter adds · batch picker autofocuses qty + Enter adds · `F4` customer · `F8` finalize · `F9` new sale (suppressed while a modal is open); on-screen `Kbd` hints. See `src/hooks/useHotkeys.ts`
+- [x] Route/code-splitting — `LoginPage`/`PosPage` are `React.lazy` (Suspense in `App.tsx`); vendor split via `manualChunks` (react/redux/motion/dexie). Largest chunk ~298 kB; >500 kB build warning cleared
 
 ## Phase 2 — Offline-first PWA (Gold+ — THE differentiator, §9)
 
@@ -65,25 +66,25 @@
 
 ## Phase 2 — Returns & multi-branch (Gold)
 
-- [x] **Sale returns/refunds** (manager/owner): `ReturnDialog` from the sale detail (`POST /api/v1/sales/:id/returns`) — pick returnable lines + qty, prorated-discount refund preview, reason; invalidates Sale/Batch/Product/Customer so detail/stock/due refresh. `listReturns`/`getReturn` slices added (history list UI not yet surfaced)
+- [x] **Sale returns/refunds** (manager/owner): `ReturnDialog` from the sale detail (`POST /api/v1/sales/:id/returns`) — pick returnable lines + qty, prorated-discount refund preview, reason; invalidates Sale/Batch/Product/Customer so detail/stock/due refresh. History via `ReturnsHistory` modal (header "Returns", manager/owner + online): paginated `GET /sales/returns` with items + refund split + reason inline
 - [x] **Branch context** — `BranchSwitcher` in the header shows the current branch (`GET /api/v1/branches`); owner/manager on a multi-branch tenant can switch (also lets an owner with no JWT branch pick one). Switching clears the cart and re-syncs the catalog (the active branch flows from `selectActiveBranchId` into catalog sync, batch picker, checkout, recent sales). Online-only
 - [x] Role guards in UI: the Return action is owner/manager only (`selectIsManager`); the server also `requireRole`s it
 
 ## Phase 3 — Platinum niceties (POS-side)
 
-- [ ] **Prescription history** quick-view when a customer is attached (Platinum-gated read; `GET /api/v1/customers/:id/...` prescription endpoint)
+- [x] **Prescription history** quick-view — `PrescriptionHistory` modal opened from the attached-customer chip (an "Rx" button shown only when `features.prescriptionHistory` + online); reads `GET /api/v1/customers/:id/prescriptions` (Platinum-gated server-side), lists date/doctor/notes + attachment badge
 - [x] **White-label branding** — `GET /api/v1/tenants/branding` → `auth.branding`; business name + logo in the header, accent colour via `--primary`/`--ring` (`useBrandingTheme`, Platinum-gated), and business name/logo/address/phone/footer on the thermal receipt (`features/tenants/branding.ts` `receiptBranding`). Replaces the `VITE_SHOP_NAME` stopgap (now just a fallback)
-- [ ] Cross-branch stock visibility hint when local batch is short (read-only; transfers are initiated from dashboard)
+- [x] Cross-branch stock visibility hint — `CrossBranchHint` in the batch picker shows other branches' on-hand stock for a product when the current branch is short (`≤5` on hand, online); read-only, points to the dashboard for transfers (`GET /batches?productId=` across branches + branch names)
 
 ## Cross-cutting / polish
 
 - [ ] **framer-motion**: cart add/remove, screen transitions, toast/queue animations (keep snappy — this is a fast-use counter tool)
-- [ ] Error boundary + global API error → toast mapping (mirror server `ApiError` shape)
-- [ ] Loading/skeleton states (shadcn `Skeleton`) for catalog + sales
-- [ ] Accessibility: large tap targets, high contrast (counter lighting), full keyboard operation
+- [x] Error boundary + global API error → toast mapping (mirror server `ApiError` shape) — `src/components/ErrorBoundary.tsx` (recoverable fallback + reload, dev-only message) wraps the app in `main.tsx`; API errors map via `lib/apiError.ts`
+- [x] Loading/skeleton states (shadcn `Skeleton`) — batch picker, recent sales, sale queue, returns history, prescriptions, **product search**, **customer search**; boot/auth gate shows a spinner (`ProtectedRoute`) and lazy routes a Suspense fallback
+- [~] Accessibility — full keyboard operation (hotkeys) done; modals labelled (`aria-labelledby/describedby`, focus-on-open, Escape), connectivity `role="status"` live regions (`OnlineStatus`/`OfflineBanner`), accessible names on icon-only/ambiguous controls (qty steppers, discount/paid inputs). Remaining: high-contrast pass + larger touch targets audit
 - [x] Thermal-printer-friendly receipt CSS (58mm/80mm) — `src/lib/printReceipt.ts` (popup + `@page size`); default 80mm, `widthMm` switch for 58mm
 - [ ] Env-driven config; build + preview; deploy as static files behind nginx (VPS/aaPanel)
-- [ ] Tests: Vitest + React Testing Library for cart logic, offline queue, sync reducer; Playwright smoke for offline→online flow
+- [~] Tests: Vitest + RTL set up (`vitest.config.ts`, `test/setup.ts`); 7 files / 31 tests green — cart reducer+selectors, offline-sync slice, plan features, currency, datetime, apiError, Kbd (RTL smoke). Still TODO: Dexie `saleQueue`/`catalog` (needs `fake-indexeddb`), store-connected component tests, Playwright offline→online smoke
 
 ---
 

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { Loader2, Receipt, Trash2, UserRound, X } from 'lucide-react';
+import { Loader2, Pill, Receipt, Trash2, UserRound, X } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   clearCart,
@@ -15,6 +15,7 @@ import { receiptBranding } from '@/features/tenants/branding';
 import { selectOffline } from '@/features/offline/offlineSlice';
 import { useCreateSaleMutation } from '@/features/sales/salesApi';
 import { CustomerPicker } from '@/features/customers/CustomerPicker';
+import { PrescriptionHistory } from '@/features/customers/PrescriptionHistory';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { useHotkeys } from '@/hooks/useHotkeys';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
@@ -60,6 +61,7 @@ export function CheckoutPanel({ branchId }: { branchId?: string }) {
   const [pickerOpen, setPickerOpen] = useState(false);
   // Bumped on each open so CustomerPicker remounts with fresh internal state.
   const [pickerKey, setPickerKey] = useState(0);
+  const [rxOpen, setRxOpen] = useState(false);
 
   const [createSale, { isLoading }] = useCreateSaleMutation();
 
@@ -248,14 +250,27 @@ export function CheckoutPanel({ branchId }: { branchId?: string }) {
             <UserRound className="size-4" />
             {customer.name}
           </span>
-          <button
-            type="button"
-            onClick={() => dispatch(detachCustomer())}
-            className="rounded p-0.5 text-muted-foreground hover:text-foreground"
-            aria-label="Detach customer"
-          >
-            <X className="size-4" />
-          </button>
+          <div className="flex items-center gap-1">
+            {features.prescriptionHistory && online && (
+              <button
+                type="button"
+                onClick={() => setRxOpen(true)}
+                className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-muted-foreground hover:text-foreground"
+                title="Prescription history"
+              >
+                <Pill className="size-3.5" />
+                Rx
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => dispatch(detachCustomer())}
+              className="rounded p-0.5 text-muted-foreground hover:text-foreground"
+              aria-label="Detach customer"
+            >
+              <X className="size-4" />
+            </button>
+          </div>
         </div>
       ) : (
         <Button
@@ -295,8 +310,11 @@ export function CheckoutPanel({ branchId }: { branchId?: string }) {
 
       {/* Paid amount */}
       <div className="flex items-center justify-between gap-2">
-        <label className="text-sm text-muted-foreground">Paid</label>
+        <label htmlFor="paid-amount" className="text-sm text-muted-foreground">
+          Paid
+        </label>
         <input
+          id="paid-amount"
           type="number"
           min={0}
           value={paidInput ?? String(defaultPaid)}
@@ -347,7 +365,9 @@ export function CheckoutPanel({ branchId }: { branchId?: string }) {
       <Button
         size="lg"
         className="h-12 text-base"
-        disabled={empty || isLoading || !branchId || overpaid || (!online && !offlineReady)}
+        disabled={
+          empty || isLoading || !branchId || overpaid || (!online && !offlineReady)
+        }
         onClick={() => void handleFinalize()}
       >
         {isLoading ? (
@@ -362,7 +382,8 @@ export function CheckoutPanel({ branchId }: { branchId?: string }) {
       </Button>
 
       <p className="text-center text-[11px] text-muted-foreground">
-        <Kbd>F2</Kbd> search · <Kbd>F4</Kbd> customer · <Kbd>F8</Kbd> pay · <Kbd>F9</Kbd> new
+        <Kbd>F2</Kbd> search · <Kbd>F4</Kbd> customer · <Kbd>F8</Kbd> pay · <Kbd>F9</Kbd>{' '}
+        new
       </p>
 
       <CustomerPicker
@@ -371,6 +392,15 @@ export function CheckoutPanel({ branchId }: { branchId?: string }) {
         onClose={() => setPickerOpen(false)}
         onPick={(c) => dispatch(attachCustomer({ id: c._id, name: c.name }))}
       />
+
+      {customer && (
+        <PrescriptionHistory
+          open={rxOpen}
+          customerId={customer.id}
+          customerName={customer.name}
+          onClose={() => setRxOpen(false)}
+        />
+      )}
     </div>
   );
 }

@@ -59,6 +59,28 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // Split large third-party libs into their own long-cacheable chunks so
+        // no single bundle trips the size budget and vendor code isn't re-fetched
+        // on every app deploy. (rolldown-vite only supports the function form.)
+        manualChunks(id: string) {
+          if (!id.includes('node_modules')) return;
+          if (
+            id.includes('/react-router') ||
+            id.includes('/react-dom') ||
+            id.includes('/react/') ||
+            id.includes('/scheduler/')
+          )
+            return 'react-vendor';
+          if (id.includes('/@reduxjs/') || id.includes('/react-redux/')) return 'redux';
+          if (id.includes('/framer-motion/') || id.includes('/motion-')) return 'motion';
+          if (id.includes('/dexie')) return 'dexie';
+        },
+      },
+    },
+  },
   server: {
     port: 5173,
   },

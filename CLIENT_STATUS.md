@@ -60,23 +60,23 @@ Legend: ✅ done · 🟡 partial · ❌ not started
 - 🟡 PWA icons + install prompt — `public/pwa-icon.svg` (maskable) in the manifest; `InstallButton` (`useInstallPrompt`); offline splash via manifest theme/background. Lighthouse PWA audit not yet run
 
 ### Phase 2 — Returns & multi-branch (Gold)  → ✅ complete
-- ✅ Returns/refunds — `src/features/sales/ReturnDialog.tsx` from the sale detail (owner/manager via `selectIsManager`); pick returnable lines + qty, prorated-discount refund preview, reason → `POST /sales/:id/returns`; invalidates Sale/Batch/Product/Customer. `listReturns`/`getReturn` slices ready (history list UI not surfaced yet)
+- ✅ Returns/refunds — `src/features/sales/ReturnDialog.tsx` from the sale detail (owner/manager via `selectIsManager`); pick returnable lines + qty, prorated-discount refund preview, reason → `POST /sales/:id/returns`; invalidates Sale/Batch/Product/Customer. History: `src/features/sales/ReturnsHistory.tsx` modal (header "Returns", manager/owner + online) — paginated `GET /sales/returns`, items + refund split + reason inline
 - ✅ Branch context / switch + catalog re-sync — `src/features/branches/{branchesApi,BranchSwitcher}.tsx`; active branch held in `auth.activeBranchId` (`selectActiveBranchId`, falls back to JWT branch) and flows into catalog sync / batch picker / checkout / recent sales. Owner/manager switch on multi-branch tenants; switching clears the cart + re-syncs the catalog. Online-only
 
-### Phase 3 — Platinum (POS-side)  → 🟡 branding done
-- ❌ Prescription history quick-view (Platinum-gated)
+### Phase 3 — Platinum (POS-side)  → ✅ complete
+- ✅ Prescription history quick-view — `src/features/customers/PrescriptionHistory.tsx` modal from the attached-customer chip ("Rx" button, gated on `features.prescriptionHistory` + online); `getCustomerPrescriptions` (`GET /customers/:id/prescriptions`, Platinum server-gated)
 - ✅ White-label branding on shell + receipt — `getBranding` → `auth.branding`; header business name + logo, accent colour via `--primary`/`--ring` (`useBrandingTheme`, Platinum-gated), receipt header/footer (`features/tenants/branding.ts`). `VITE_SHOP_NAME` is now just a fallback
-- ❌ Cross-branch stock visibility hint
+- ✅ Cross-branch stock visibility hint — `src/features/pos/CrossBranchHint.tsx` in the batch picker; shows other branches' on-hand stock when the current branch is short (≤5, online), read-only with a "transfer from the dashboard" note
 
 ### Cross-cutting / polish  → 🟡
 - 🟡 framer-motion — used in login, product search, online indicator; more screens pending
 - ✅ Global API error → toast mapping
-- ❌ Error boundary
-- ❌ Loading/skeleton primitives (shadcn `Skeleton`)
-- 🟡 Accessibility — full keyboard operation of the billing flow done (search/scan, batch+qty, customer, finalize, new sale); large tap targets / high-contrast / ARIA sweep still pending
+- ✅ Error boundary — `src/components/ErrorBoundary.tsx` wraps the app (`main.tsx`); recoverable fallback + reload, dev-only error detail
+- ✅ Loading/skeleton states — `Skeleton` across batch picker, recent sales, sale queue, returns history, prescriptions, product search, customer search; boot/auth shows a spinner (`ProtectedRoute`), lazy routes a Suspense fallback
+- 🟡 Accessibility — full keyboard operation + ARIA sweep done: modals labelled (`aria-labelledby/describedby` + focus-on-open via `Modal`), connectivity live regions (`role="status"` on `OnlineStatus`/`OfflineBanner`), accessible names on icon-only/ambiguous controls (qty steppers, discount/paid inputs). Remaining: high-contrast review + larger touch-target audit
 - ✅ Thermal-printer receipt CSS (58/80mm) — `src/lib/printReceipt.ts` (`@page size`, monospace, dashed rules; `widthMm` 58|80)
-- ❌ Tests (Vitest + RTL; Playwright offline→online smoke)
-- ❌ Route code-splitting (build warns >500 kB single chunk)
+- 🟡 Tests — Vitest + RTL set up (`vitest.config.ts` node default + per-file jsdom, `test/setup.ts`); 7 files / 31 tests green (cart, offline-sync slice, plan features, currency, datetime, apiError, Kbd smoke). TODO: Dexie `saleQueue`/`catalog` (needs `fake-indexeddb`), store-connected component tests, Playwright offline→online smoke
+- ✅ Route code-splitting — `LoginPage`/`PosPage` lazy (Suspense in `App.tsx`) + vendor `manualChunks` (react/redux/motion/dexie) in `vite.config.ts`; largest chunk ~298 kB, >500 kB warning cleared
 
 ---
 
@@ -110,8 +110,8 @@ How this client connects to the API. Source of truth: `../medipos-server/CLAUDE.
 | Auth | `auth/login`, `auth/refresh`, `auth/logout`, `auth/me` | ✅ wired |
 | Products | `products` (`?search,category,page,limit`), `products/barcode/:code` | ✅ slice; 🟡 UI (search only) |
 | Batches | `batches` (`?productId,branchId,inStock`), `batches/fefo` | ✅ slice + batch picker UI |
-| Sales | `sales` (`GET/POST`), `sales/:id`, `sales/:id/invoice`, `sales/:id/returns`, `sales/returns`, `sales/bulk-sync` | ✅ slice (all); ✅ UI (finalize, recent list+detail, invoice, **returns/refunds**, offline bulk-sync); returns-history list UI not surfaced |
-| Customers | `customers` (search/create) | ✅ slice + picker UI |
+| Sales | `sales` (`GET/POST`), `sales/:id`, `sales/:id/invoice`, `sales/:id/returns`, `sales/returns`, `sales/bulk-sync` | ✅ slice (all); ✅ UI (finalize, recent list+detail, invoice, returns/refunds, **returns history**, offline bulk-sync) |
+| Customers | `customers` (search/create), `customers/:id/prescriptions` | ✅ slice + picker UI + Rx history modal |
 | Branches | `branches` (list) | ✅ slice + `BranchSwitcher` (branch context/switch) |
 | Tenant | `tenants/:id` (plan) | ✅ slice (`getTenant`) — used to gate offline by plan |
 | Branding | `tenants/branding` | ✅ slice (`getBranding`) — shell + receipt white-labeling |

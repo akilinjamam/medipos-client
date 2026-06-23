@@ -105,16 +105,23 @@ export function ReturnDialog({ open, sale, onClose }: ReturnDialogProps) {
                       variant="outline"
                       size="icon"
                       className="size-7"
+                      aria-label={`Return one fewer of batch ${it.batchNo}`}
                       onClick={() => setQty(it.batchId, q - 1, max)}
                       disabled={q <= 0}
                     >
                       <Minus className="size-3.5" />
                     </Button>
-                    <span className="w-7 text-center text-sm font-medium tabular-nums">{q}</span>
+                    <span
+                      className="w-7 text-center text-sm font-medium tabular-nums"
+                      aria-label={`Returning ${q}`}
+                    >
+                      {q}
+                    </span>
                     <Button
                       variant="outline"
                       size="icon"
                       className="size-7"
+                      aria-label={`Return one more of batch ${it.batchNo}`}
                       onClick={() => setQty(it.batchId, q + 1, max)}
                       disabled={q >= max}
                     >

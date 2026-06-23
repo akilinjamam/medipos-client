@@ -6,6 +6,7 @@ import { addLine } from '@/features/cart/cartSlice';
 import { useAppDispatch } from '@/store/hooks';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { getCachedBatches } from '@/db/catalog';
+import { CrossBranchHint } from '@/features/pos/CrossBranchHint';
 import { apiErrorMessage } from '@/lib/apiError';
 import { formatCurrency } from '@/lib/currency';
 import { cn } from '@/lib/utils';
@@ -22,6 +23,9 @@ interface BatchPickerProps {
   /** Called after a batch+qty is added to the cart (e.g. to refocus search). */
   onAdded?: () => void;
 }
+
+// At or below this on-hand total at the current branch, surface the cross-branch hint.
+const LOW_STOCK_HINT = 5;
 
 function daysUntil(dateIso: string): number {
   const ms = new Date(dateIso).getTime() - Date.now();
@@ -64,6 +68,10 @@ export function BatchPicker({ product, branchId, onClose, onAdded }: BatchPicker
   // CachedBatch extends Batch, so the cache rows satisfy Batch[] for rendering.
   const batches: Batch[] | undefined = online ? apiBatches : cachedBatches;
   const loading = online ? isFetching : open && !online && cachedBatches === undefined;
+
+  // "Short" at this branch → offer the cross-branch availability hint (online).
+  const currentTotal = (batches ?? []).reduce((n, b) => n + b.quantityInStock, 0);
+  const short = online && !loading && currentTotal <= LOW_STOCK_HINT;
 
   // `null` override means "use the FEFO default" (first batch, server-sorted).
   // Derived rather than synced via effect, and reset per-product by a `key` on
@@ -176,6 +184,7 @@ export function BatchPicker({ product, branchId, onClose, onAdded }: BatchPicker
                   type="button"
                   variant="outline"
                   size="icon"
+                  aria-label="Decrease quantity"
                   onClick={() => setQty((q) => Math.max(1, q - 1))}
                   disabled={!selected}
                 >
@@ -186,6 +195,7 @@ export function BatchPicker({ product, branchId, onClose, onAdded }: BatchPicker
                   min={1}
                   max={maxQty || undefined}
                   value={qty}
+                  aria-label="Quantity"
                   autoFocus
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
@@ -205,6 +215,7 @@ export function BatchPicker({ product, branchId, onClose, onAdded }: BatchPicker
                   type="button"
                   variant="outline"
                   size="icon"
+                  aria-label="Increase quantity"
                   onClick={() => setQty((q) => Math.min(maxQty || q + 1, q + 1))}
                   disabled={!selected || qty >= maxQty}
                 >
@@ -218,6 +229,10 @@ export function BatchPicker({ product, branchId, onClose, onAdded }: BatchPicker
             </Button>
           </div>
         </div>
+      )}
+
+      {branchId && short && product && (
+        <CrossBranchHint productId={product._id} currentBranchId={branchId} />
       )}
     </Modal>
   );

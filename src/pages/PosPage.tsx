@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { History, LogOut } from 'lucide-react';
+import { History, LogOut, RotateCcw } from 'lucide-react';
 import { OnlineStatus } from '@/components/OnlineStatus';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +9,7 @@ import {
   selectFeatures,
   selectActiveBranchId,
   selectBranding,
+  selectIsManager,
 } from '@/features/auth/authSlice';
 import { useLogoutMutation } from '@/features/auth/authApi';
 import { BranchSwitcher } from '@/features/branches/BranchSwitcher';
@@ -28,6 +29,7 @@ import { BatchPicker } from '@/features/pos/BatchPicker';
 import { Cart } from '@/features/pos/Cart';
 import { CheckoutPanel } from '@/features/pos/CheckoutPanel';
 import { RecentSales } from '@/features/sales/RecentSales';
+import { ReturnsHistory } from '@/features/sales/ReturnsHistory';
 import type { Product } from '@/types/api';
 
 /**
@@ -40,6 +42,7 @@ export default function PosPage() {
   const features = useAppSelector(selectFeatures);
   const branchId = useAppSelector(selectActiveBranchId);
   const branding = useAppSelector(selectBranding);
+  const isManager = useAppSelector(selectIsManager);
   const online = useOnlineStatus();
   const [logout, { isLoading }] = useLogoutMutation();
 
@@ -64,6 +67,8 @@ export default function PosPage() {
   const [salesKey, setSalesKey] = useState(0);
   // Offline sale-queue modal.
   const [queueOpen, setQueueOpen] = useState(false);
+  // Returns-history modal (manager/owner).
+  const [returnsOpen, setReturnsOpen] = useState(false);
 
   return (
     <div className="flex h-screen flex-col">
@@ -78,7 +83,9 @@ export default function PosPage() {
         <div className="flex items-center gap-4">
           <OnlineStatus />
           {features.offlineMode && <OfflineSyncStatus onResync={resync} />}
-          {features.offlineMode && <OfflineQueueStatus onClick={() => setQueueOpen(true)} />}
+          {features.offlineMode && (
+            <OfflineQueueStatus onClick={() => setQueueOpen(true)} />
+          )}
           <InstallButton />
           {user && (
             <span className="text-sm text-muted-foreground">
@@ -98,6 +105,18 @@ export default function PosPage() {
             <History className="size-4" />
             Recent sales
           </Button>
+          {isManager && (
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={!online}
+              title={online ? undefined : 'Unavailable offline'}
+              onClick={() => setReturnsOpen(true)}
+            >
+              <RotateCcw className="size-4" />
+              Returns
+            </Button>
+          )}
           <Button variant="ghost" size="sm" onClick={() => logout()} disabled={isLoading}>
             <LogOut className="size-4" />
             Logout
@@ -144,6 +163,12 @@ export default function PosPage() {
         onClose={() => setQueueOpen(false)}
         online={online}
         onSyncNow={flush}
+      />
+
+      <ReturnsHistory
+        open={returnsOpen}
+        onClose={() => setReturnsOpen(false)}
+        branchId={branchId}
       />
     </div>
   );

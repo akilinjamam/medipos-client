@@ -8,6 +8,9 @@ export function OnlineStatus() {
 
   return (
     <motion.div
+      role="status"
+      aria-live="polite"
+      aria-label={online ? 'Online' : 'Offline'}
       initial={{ opacity: 0, y: -4 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn(

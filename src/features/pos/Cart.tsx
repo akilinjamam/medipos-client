@@ -60,17 +60,22 @@ export function Cart() {
                   variant="outline"
                   size="icon"
                   className="size-7"
+                  aria-label="Decrease quantity"
                   onClick={() => dispatch(setQty({ batchId: line.batchId, qty: line.qty - 1 }))}
                 >
                   <Minus className="size-3.5" />
                 </Button>
-                <span className="w-8 text-center text-sm font-medium tabular-nums">
+                <span
+                  className="w-8 text-center text-sm font-medium tabular-nums"
+                  aria-label={`Quantity ${line.qty}`}
+                >
                   {line.qty}
                 </span>
                 <Button
                   variant="outline"
                   size="icon"
                   className="size-7"
+                  aria-label="Increase quantity"
                   disabled={line.qty >= line.maxQty}
                   onClick={() => dispatch(setQty({ batchId: line.batchId, qty: line.qty + 1 }))}
                 >
@@ -79,10 +84,11 @@ export function Cart() {
               </div>
 
               <div className="flex items-center gap-1">
-                <label className="text-xs text-muted-foreground">Disc</label>
+                <span className="text-xs text-muted-foreground">Disc</span>
                 <input
                   type="number"
                   min={0}
+                  aria-label={`Discount for ${line.productName}`}
                   value={line.discount || ''}
                   placeholder="0"
                   onChange={(e) =>

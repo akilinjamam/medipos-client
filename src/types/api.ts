@@ -126,6 +126,23 @@ export interface Customer {
   updatedAt: string;
 }
 
+/** Mirrors server PrescriptionEntry (Platinum read). */
+export interface PrescriptionEntry {
+  date: string;
+  doctorName?: string;
+  notes?: string;
+  /** Storage key for a scanned prescription (no public URL from the POS). */
+  fileKey?: string;
+}
+
+/** Response of `GET /customers/:id/prescriptions` (Platinum-gated). */
+export interface PrescriptionHistory {
+  customerId: string;
+  name: string;
+  phone?: string;
+  prescriptions: PrescriptionEntry[];
+}
+
 export type ReturnStatus = 'none' | 'partial' | 'full';
 
 /** Mirrors server SaleItem. */

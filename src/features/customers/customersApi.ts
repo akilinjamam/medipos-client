@@ -1,5 +1,5 @@
 import { baseApi } from '@/store/api/baseApi';
-import type { Customer, Envelope } from '@/types/api';
+import type { Customer, Envelope, PrescriptionHistory } from '@/types/api';
 
 export interface ListCustomersArgs {
   search?: string;
@@ -32,7 +32,18 @@ export const customersApi = baseApi.injectEndpoints({
       transformResponse: (res: Envelope<Customer>) => res.data,
       invalidatesTags: ['Customer'],
     }),
+
+    // GET /api/v1/customers/:id/prescriptions — prescription history (Platinum).
+    getCustomerPrescriptions: builder.query<PrescriptionHistory, string>({
+      query: (id) => ({ url: `/customers/${id}/prescriptions` }),
+      transformResponse: (res: Envelope<PrescriptionHistory>) => res.data,
+      providesTags: ['Customer'],
+    }),
   }),
 });
 
-export const { useLazyListCustomersQuery, useCreateCustomerMutation } = customersApi;
+export const {
+  useLazyListCustomersQuery,
+  useCreateCustomerMutation,
+  useGetCustomerPrescriptionsQuery,
+} = customersApi;

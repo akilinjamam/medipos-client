@@ -3,6 +3,29 @@ import { featuresForPlan, type Plan } from '@/config/planFeatures';
 import type { RootState } from '@/store/store';
 import type { TenantBranding } from '@/types/api';
 
+// The active branch is remembered across reloads (it's not a secret — an owner
+// has no JWT branch, so without this they'd be re-prompted to pick on every
+// reload). The access token is deliberately NOT persisted.
+const ACTIVE_BRANCH_KEY = 'medipos.activeBranchId';
+
+function loadActiveBranch(): string | null {
+  try {
+    return typeof localStorage !== 'undefined' ? localStorage.getItem(ACTIVE_BRANCH_KEY) : null;
+  } catch {
+    return null;
+  }
+}
+
+function persistActiveBranch(branchId: string | null): void {
+  try {
+    if (typeof localStorage === 'undefined') return;
+    if (branchId) localStorage.setItem(ACTIVE_BRANCH_KEY, branchId);
+    else localStorage.removeItem(ACTIVE_BRANCH_KEY);
+  } catch {
+    // Ignore storage failures (private mode, quota) — falls back to JWT branch.
+  }
+}
+
 /**
  * Auth state for the POS terminal.
  *
@@ -41,7 +64,7 @@ const initialState: AuthState = {
   accessToken: null,
   user: null,
   plan: null,
-  activeBranchId: null,
+  activeBranchId: loadActiveBranch(),
   branding: null,
   initializing: true,
 };
@@ -68,6 +91,7 @@ const authSlice = createSlice({
     },
     setActiveBranch(state, action: PayloadAction<string | null>) {
       state.activeBranchId = action.payload;
+      persistActiveBranch(action.payload);
     },
     setBranding(state, action: PayloadAction<TenantBranding | null>) {
       state.branding = action.payload;
@@ -78,6 +102,7 @@ const authSlice = createSlice({
       state.plan = null;
       state.activeBranchId = null;
       state.branding = null;
+      persistActiveBranch(null);
     },
     setInitializing(state, action: PayloadAction<boolean>) {
       state.initializing = action.payload;
