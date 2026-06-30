@@ -123,13 +123,14 @@ export function ProductSearch({ onPick }: ProductSearchProps) {
       )}
 
       <div className="flex flex-col gap-1.5">
-        {loading && products.length === 0 &&
+        {loading &&
+          products.length === 0 &&
           [0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
 
         <AnimatePresence initial={false}>
           {products.map((p) => (
             <motion.button
-              key={p._id}
+              key={p.id}
               type="button"
               onClick={() => onPick(p)}
               initial={{ opacity: 0, y: 4 }}
@@ -140,7 +141,8 @@ export function ProductSearch({ onPick }: ProductSearchProps) {
               <div className="min-w-0">
                 <div className="truncate font-medium">{p.name}</div>
                 <div className="truncate text-xs text-muted-foreground">
-                  {[p.strength, p.brand, p.genericName].filter(Boolean).join(' · ') || '—'}
+                  {[p.strength, p.brand, p.genericName].filter(Boolean).join(' · ') ||
+                    '—'}
                 </div>
               </div>
               <span className="ml-3 shrink-0 rounded bg-secondary px-2 py-0.5 text-xs text-secondary-foreground">

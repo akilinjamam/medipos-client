@@ -11,9 +11,6 @@ import type { Batch, Product } from '@/types/api';
 export const LAST_SYNC_KEY = 'catalog:lastSync';
 export const SYNC_BRANCH_KEY = 'catalog:branchId';
 
-const toCachedProduct = (p: Product): CachedProduct => ({ ...p, id: p._id });
-const toCachedBatch = (b: Batch): CachedBatch => ({ ...b, id: b._id });
-
 /** Atomically replace the cached catalog with a freshly pulled snapshot. */
 export async function replaceCatalog(
   products: Product[],
@@ -23,8 +20,9 @@ export async function replaceCatalog(
   await db.transaction('rw', db.products, db.batches, db.meta, async () => {
     await db.products.clear();
     await db.batches.clear();
-    await db.products.bulkPut(products.map(toCachedProduct));
-    await db.batches.bulkPut(batches.map(toCachedBatch));
+    // `id` is the Dexie primary key and is already on each server document.
+    await db.products.bulkPut(products);
+    await db.batches.bulkPut(batches);
     await db.meta.bulkPut([
       { key: LAST_SYNC_KEY, value: Date.now() },
       { key: SYNC_BRANCH_KEY, value: branchId },

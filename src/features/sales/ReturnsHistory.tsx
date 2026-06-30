@@ -55,7 +55,7 @@ export function ReturnsHistory({ open, onClose, branchId }: ReturnsHistoryProps)
         <div className="flex flex-col gap-3">
           <div className="flex flex-col gap-2">
             {returns.map((r) => (
-              <ReturnRow key={r._id} ret={r} />
+              <ReturnRow key={r.id} ret={r} />
             ))}
           </div>
 

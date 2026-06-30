@@ -10,8 +10,9 @@ import type { Batch, OfflineSaleBody, Product } from '@/types/api';
  *   `clientUuid`, POSTed to /api/v1/sales/bulk-sync on reconnect (idempotent).
  * - `meta`: bookkeeping such as last catalog sync time.
  *
- * Catalog rows store the full server document plus a string `id` (= `_id`) for
- * the Dexie primary key, so reads can be used directly as `Product` / `Batch`.
+ * Catalog rows store the full server document; its `id` (the server maps
+ * `_id` -> `id`) is the Dexie primary key, so reads are usable directly as
+ * `Product` / `Batch`.
  */
 export type CachedProduct = Product & { id: string };
 export type CachedBatch = Batch & { id: string };

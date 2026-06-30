@@ -57,11 +57,11 @@ export function BatchPicker({ product, branchId, onClose, onAdded }: BatchPicker
     isError,
     error,
   } = useListBatchesQuery(
-    { productId: product?._id, branchId, inStock: true },
+    { productId: product?.id, branchId, inStock: true },
     { skip: !open || !branchId || !online },
   );
   const cachedBatches = useLiveQuery(
-    () => (open && !online && product ? getCachedBatches(product._id) : undefined),
+    () => (open && !online && product ? getCachedBatches(product.id) : undefined),
     [open, online, product],
   );
 
@@ -79,17 +79,17 @@ export function BatchPicker({ product, branchId, onClose, onAdded }: BatchPicker
   const [overrideId, setOverrideId] = useState<string | null>(null);
   const [qty, setQty] = useState(1);
 
-  const selectedId = overrideId ?? batches?.[0]?._id ?? null;
-  const selected = batches?.find((b) => b._id === selectedId) ?? null;
+  const selectedId = overrideId ?? batches?.[0]?.id ?? null;
+  const selected = batches?.find((b) => b.id === selectedId) ?? null;
   const maxQty = selected?.quantityInStock ?? 0;
 
   function handleAdd() {
     if (!product || !selected) return;
     dispatch(
       addLine({
-        productId: product._id,
+        productId: product.id,
         productName: product.name,
-        batchId: selected._id,
+        batchId: selected.id,
         batchNo: selected.batchNo,
         expiryDate: selected.expiryDate,
         qty,
@@ -137,13 +137,13 @@ export function BatchPicker({ product, branchId, onClose, onAdded }: BatchPicker
           <div className="flex flex-col gap-1.5">
             {batches.map((b: Batch, idx) => {
               const days = daysUntil(b.expiryDate);
-              const isSelected = b._id === selectedId;
+              const isSelected = b.id === selectedId;
               return (
                 <button
-                  key={b._id}
+                  key={b.id}
                   type="button"
                   onClick={() => {
-                    setOverrideId(b._id);
+                    setOverrideId(b.id);
                     setQty((q) => Math.min(q, b.quantityInStock) || 1);
                   }}
                   className={cn(
@@ -178,7 +178,9 @@ export function BatchPicker({ product, branchId, onClose, onAdded }: BatchPicker
 
           <div className="flex items-end justify-between gap-4 border-t pt-3">
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-muted-foreground">Quantity</label>
+              <label className="text-xs font-medium text-muted-foreground">
+                Quantity
+              </label>
               <div className="flex items-center gap-1">
                 <Button
                   type="button"
@@ -223,7 +225,12 @@ export function BatchPicker({ product, branchId, onClose, onAdded }: BatchPicker
                 </Button>
               </div>
             </div>
-            <Button type="button" onClick={handleAdd} disabled={!selected} className="flex-1">
+            <Button
+              type="button"
+              onClick={handleAdd}
+              disabled={!selected}
+              className="flex-1"
+            >
               {loading && <Loader2 className="size-4 animate-spin" />}
               Add {selected ? formatCurrency(selected.sellPrice * qty) : ''}
             </Button>
@@ -232,7 +239,7 @@ export function BatchPicker({ product, branchId, onClose, onAdded }: BatchPicker
       )}
 
       {branchId && short && product && (
-        <CrossBranchHint productId={product._id} currentBranchId={branchId} />
+        <CrossBranchHint productId={product.id} currentBranchId={branchId} />
       )}
     </Modal>
   );

@@ -4,7 +4,9 @@ import { batchesApi } from '@/features/batches/batchesApi';
 import { replaceCatalog } from '@/db/catalog';
 import type { Product } from '@/types/api';
 
-const PAGE_SIZE = 200;
+// Must stay within the server's pagination cap (paginationSchema `limit.max(100)`);
+// the loop below pages through the full catalog regardless.
+const PAGE_SIZE = 100;
 
 export interface CatalogSyncResult {
   products: number;

@@ -16,7 +16,7 @@ export interface TenantBranding {
 
 /** Mirrors server TenantDoc (the only non-tenant-scoped collection). */
 export interface Tenant {
-  _id: string;
+  id: string;
   name: string;
   plan: Plan;
   subscriptionStatus: SubscriptionStatus;
@@ -46,9 +46,9 @@ export type ProductCategory = 'OTC' | 'Rx' | 'Controlled';
 /** Payment methods accepted at the counter (mirrors server sale schema). */
 export type PaymentMethod = 'cash' | 'bkash' | 'nagad' | 'card' | 'due';
 
-/** Mirrors server ProductDoc as serialized to JSON (documents expose `_id`). */
+/** Mirrors server ProductDoc as serialized to JSON (the global toJSON plugin maps `_id` -> `id`). */
 export interface Product {
-  _id: string;
+  id: string;
   tenantId: string;
   name: string;
   genericName?: string;
@@ -68,7 +68,7 @@ export interface Product {
 
 /** Mirrors server BranchDoc as serialized to JSON. */
 export interface Branch {
-  _id: string;
+  id: string;
   tenantId: string;
   name: string;
   address?: string;
@@ -81,7 +81,7 @@ export interface Branch {
 
 /** Mirrors server BatchDoc as serialized to JSON. Stock is tracked per batch. */
 export interface Batch {
-  _id: string;
+  id: string;
   tenantId: string;
   productId: string;
   branchId: string;
@@ -116,7 +116,7 @@ export interface FefoAllocation {
 
 /** Mirrors server CustomerDoc (prescription history omitted — Platinum read). */
 export interface Customer {
-  _id: string;
+  id: string;
   tenantId: string;
   name: string;
   phone?: string;
@@ -159,7 +159,7 @@ export interface SaleItem {
 
 /** Mirrors server SaleDoc as serialized to JSON. */
 export interface Sale {
-  _id: string;
+  id: string;
   tenantId: string;
   branchId: string;
   cashierId: string;
@@ -190,7 +190,7 @@ export interface SaleReturnItem {
 
 /** Mirrors server SaleReturnDoc — a return/refund against a finalized Sale. */
 export interface SaleReturn {
-  _id: string;
+  id: string;
   tenantId: string;
   saleId: string;
   branchId: string;

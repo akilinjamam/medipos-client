@@ -11,7 +11,6 @@ import { cn } from '@/lib/utils';
  */
 export function OfflineSyncStatus({ onResync }: { onResync: () => void }) {
   const { status, lastSyncedAt, productCount, error } = useAppSelector(selectOffline);
-
   const label =
     status === 'syncing'
       ? 'Syncing catalog…'

@@ -202,7 +202,7 @@ export function CheckoutPanel({ branchId }: { branchId?: string }) {
     try {
       const sale = await createSale(body).unwrap();
       const receipt = buildReceipt({
-        invoiceNo: sale._id,
+        invoiceNo: sale.id,
         dateIso: sale.createdAt,
         paidAmount: sale.paidAmount,
         dueAmount: sale.dueAmount,
@@ -390,7 +390,7 @@ export function CheckoutPanel({ branchId }: { branchId?: string }) {
         key={pickerKey}
         open={pickerOpen}
         onClose={() => setPickerOpen(false)}
-        onPick={(c) => dispatch(attachCustomer({ id: c._id, name: c.name }))}
+        onPick={(c) => dispatch(attachCustomer({ id: c.id, name: c.name }))}
       />
 
       {customer && (

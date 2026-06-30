@@ -144,7 +144,7 @@ function SalesList({
         <div className="flex flex-col gap-3">
           <div className="flex flex-col gap-1.5">
             {sales.map((s) => (
-              <SaleRow key={s._id} sale={s} onSelect={() => onSelect(s._id)} />
+              <SaleRow key={s.id} sale={s} onSelect={() => onSelect(s.id)} />
             ))}
           </div>
 

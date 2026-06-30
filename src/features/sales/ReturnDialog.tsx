@@ -54,7 +54,7 @@ export function ReturnDialog({ open, sale, onClose }: ReturnDialogProps) {
     }
     try {
       const ret = await createReturn({
-        saleId: sale._id,
+        saleId: sale.id,
         body: { items, reason: reason.trim() || undefined },
       }).unwrap();
       toast.success(`Return processed — refund ${formatCurrency(ret.refundAmount)}`, {

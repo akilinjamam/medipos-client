@@ -145,7 +145,7 @@ export default function PosPage() {
       </main>
 
       <BatchPicker
-        key={picking?._id ?? 'none'}
+        key={picking?.id ?? 'none'}
         product={picking}
         branchId={branchId}
         onClose={() => setPicking(null)}

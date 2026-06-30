@@ -28,7 +28,7 @@ export function CrossBranchHint({
 
   const rows = [...byBranch.entries()]
     .filter(([, qty]) => qty > 0)
-    .map(([id, qty]) => ({ name: branches.find((b) => b._id === id)?.name ?? 'Branch', qty }))
+    .map(([id, qty]) => ({ name: branches.find((b) => b.id === id)?.name ?? 'Branch', qty }))
     .sort((a, b) => b.qty - a.qty);
 
   if (rows.length === 0) return null;

@@ -119,7 +119,7 @@ export function CustomerPicker({ open, onClose, onPick }: CustomerPickerProps) {
 
             {customers?.map((c) => (
               <button
-                key={c._id}
+                key={c.id}
                 type="button"
                 onClick={() => {
                   onPick(c);
