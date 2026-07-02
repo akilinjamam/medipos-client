@@ -20,13 +20,13 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 
-// tenantId is not a secret — remembering it spares the cashier retyping a 24-char id.
+// The pharmacy code is not a secret — remembering it spares the cashier retyping it.
 const TENANT_KEY = 'medipos.lastTenantId';
 
+// tenantId is the pharmacy's login code (e.g. "MP-4K7TQ2"); the server also
+// accepts a legacy 24-char ObjectId, so saved values keep working.
 const loginSchema = z.object({
-  tenantId: z
-    .string()
-    .regex(/^[0-9a-fA-F]{24}$/, 'Tenant ID must be a 24-character hex id'),
+  tenantId: z.string().trim().min(3, 'Enter your pharmacy code'),
   phone: z.string().min(3, 'Enter your phone number'),
   password: z.string().min(1, 'Enter your password'),
 });
@@ -81,10 +81,10 @@ export default function LoginPage() {
           <CardContent>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
               <div className="space-y-2">
-                <Label htmlFor="tenantId">Tenant ID</Label>
+                <Label htmlFor="tenantId">Pharmacy Code</Label>
                 <Input
                   id="tenantId"
-                  placeholder="24-character pharmacy id"
+                  placeholder="e.g. MP-4K7TQ2"
                   autoComplete="off"
                   aria-invalid={!!errors.tenantId}
                   {...register('tenantId')}

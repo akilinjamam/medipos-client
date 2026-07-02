@@ -18,6 +18,8 @@ export interface TenantBranding {
 export interface Tenant {
   id: string;
   name: string;
+  /** Human-friendly login code staff type at sign-in instead of the raw id. */
+  code?: string;
   plan: Plan;
   subscriptionStatus: SubscriptionStatus;
   subscriptionExpiresAt?: string;
