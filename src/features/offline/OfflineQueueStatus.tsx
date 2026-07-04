@@ -21,7 +21,7 @@ export function OfflineQueueStatus({ onClick }: { onClick: () => void }) {
       className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent"
     >
       <ListChecks className="size-3.5" />
-      Queue
+      <span className="hidden sm:inline">Queue</span>
       {pending > 0 && (
         <Badge variant="warning">
           <CloudUpload className="size-3" />

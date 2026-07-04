@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { History, LogOut, RotateCcw } from 'lucide-react';
+import { History, LogOut, Moon, RotateCcw, Sun } from 'lucide-react';
 import { OnlineStatus } from '@/components/OnlineStatus';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -25,6 +25,7 @@ import { OfflineQueueStatus } from '@/features/offline/OfflineQueueStatus';
 import { SaleQueue } from '@/features/offline/SaleQueue';
 import { OfflineBanner } from '@/features/offline/OfflineBanner';
 import { InstallButton } from '@/components/InstallButton';
+import { useTheme } from '@/components/theme/useTheme';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { ProductSearch } from '@/features/pos/ProductSearch';
 import { BatchPicker } from '@/features/pos/BatchPicker';
@@ -48,6 +49,7 @@ export default function PosPage() {
   const subscriptionExpired = useAppSelector(selectSubscriptionExpired);
   const online = useOnlineStatus();
   const [logout, { isLoading }] = useLogoutMutation();
+  const { theme, toggle } = useTheme();
 
   // Load the tenant plan (populates auth.plan → features) so offline billing is
   // gated correctly; then keep the offline catalog cache fresh for Gold+. The
@@ -76,23 +78,24 @@ export default function PosPage() {
   return (
     <div className="flex h-screen flex-col">
       {subscriptionExpired && <SubscriptionExpiredOverlay pendingCount={pendingCount} />}
-      <header className="flex items-center justify-between border-b px-6 py-3">
-        <div className="flex items-center gap-3">
+      <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b px-4 py-3 sm:px-6">
+        <div className="flex min-w-0 items-center gap-3">
           {branding?.logoUrl && (
             <img src={branding.logoUrl} alt="" className="h-7 w-auto" />
           )}
-          <span className="text-lg font-semibold">{businessName(branding)}</span>
+          <span className="truncate text-lg font-semibold">{businessName(branding)}</span>
           <BranchSwitcher />
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center justify-end gap-x-1 gap-y-2 sm:gap-x-4">
           <OnlineStatus />
           {features.offlineMode && <OfflineSyncStatus onResync={resync} />}
           {features.offlineMode && (
             <OfflineQueueStatus onClick={() => setQueueOpen(true)} />
           )}
           <InstallButton />
+
           {user && (
-            <span className="text-sm text-muted-foreground">
+            <span className="hidden text-sm text-muted-foreground lg:inline">
               {user.name} · <span className="capitalize">{user.role}</span>
             </span>
           )}
@@ -100,30 +103,42 @@ export default function PosPage() {
             variant="ghost"
             size="sm"
             disabled={!online}
-            title={online ? undefined : 'Unavailable offline'}
+            title={online ? 'Recent sales' : 'Unavailable offline'}
+            aria-label="Recent sales"
             onClick={() => {
               setSalesKey((k) => k + 1);
               setSalesOpen(true);
             }}
           >
             <History className="size-4" />
-            Recent sales
+            <span className="hidden sm:inline">Recent sales</span>
           </Button>
           {isManager && (
             <Button
               variant="ghost"
               size="sm"
               disabled={!online}
-              title={online ? undefined : 'Unavailable offline'}
+              title={online ? 'Returns' : 'Unavailable offline'}
+              aria-label="Returns"
               onClick={() => setReturnsOpen(true)}
             >
               <RotateCcw className="size-4" />
-              Returns
+              <span className="hidden sm:inline">Returns</span>
             </Button>
           )}
-          <Button variant="ghost" size="sm" onClick={() => logout()} disabled={isLoading}>
+          <Button variant="ghost" size="icon" onClick={toggle} aria-label="Toggle theme">
+            {theme === 'dark' ? <Sun className="size-4" /> : <Moon className="size-4" />}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => logout()}
+            disabled={isLoading}
+            title="Logout"
+            aria-label="Logout"
+          >
             <LogOut className="size-4" />
-            Logout
+            <span className="hidden sm:inline">Logout</span>
           </Button>
         </div>
       </header>

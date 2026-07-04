@@ -49,9 +49,9 @@ export function OfflineSyncStatus({ onResync }: { onResync: () => void }) {
       )}
     >
       <Icon className={cn('size-3.5', status === 'syncing' && 'animate-spin')} />
-      {label}
+      <span className="hidden sm:inline">{label}</span>
       {status !== 'syncing' && (
-        <RefreshCw className="size-3 opacity-0 transition-opacity group-hover:opacity-70" />
+        <RefreshCw className="hidden size-3 opacity-0 transition-opacity group-hover:opacity-70 sm:inline" />
       )}
     </button>
   );
