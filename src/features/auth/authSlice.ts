@@ -58,6 +58,8 @@ export interface AuthState {
   branding: TenantBranding | null;
   /** True until the boot-time /auth/me + refresh attempt resolves. */
   initializing: boolean;
+  /** Set when the API rejects with 402 SUBSCRIPTION_EXPIRED — blocks the POS until renewal. */
+  subscriptionExpired: boolean;
 }
 
 const initialState: AuthState = {
@@ -67,6 +69,7 @@ const initialState: AuthState = {
   activeBranchId: loadActiveBranch(),
   branding: null,
   initializing: true,
+  subscriptionExpired: false,
 };
 
 const authSlice = createSlice({
@@ -96,12 +99,16 @@ const authSlice = createSlice({
     setBranding(state, action: PayloadAction<TenantBranding | null>) {
       state.branding = action.payload;
     },
+    setSubscriptionExpired(state, action: PayloadAction<boolean>) {
+      state.subscriptionExpired = action.payload;
+    },
     clearCredentials(state) {
       state.accessToken = null;
       state.user = null;
       state.plan = null;
       state.activeBranchId = null;
       state.branding = null;
+      state.subscriptionExpired = false;
       persistActiveBranch(null);
     },
     setInitializing(state, action: PayloadAction<boolean>) {
@@ -117,6 +124,7 @@ export const {
   setPlan,
   setActiveBranch,
   setBranding,
+  setSubscriptionExpired,
   clearCredentials,
   setInitializing,
 } = authSlice.actions;
@@ -135,3 +143,6 @@ export const selectFeatures = (s: RootState) => featuresForPlan(s.auth.plan);
 /** True for owner/manager — stock-affecting actions (returns) are gated to them. */
 export const selectIsManager = (s: RootState) =>
   s.auth.user?.role === 'owner' || s.auth.user?.role === 'manager';
+
+/** True while the server is 402-blocking the tenant (subscription lapsed). */
+export const selectSubscriptionExpired = (s: RootState) => s.auth.subscriptionExpired;

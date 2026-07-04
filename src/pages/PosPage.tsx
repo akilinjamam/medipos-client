@@ -10,7 +10,9 @@ import {
   selectActiveBranchId,
   selectBranding,
   selectIsManager,
+  selectSubscriptionExpired,
 } from '@/features/auth/authSlice';
+import { SubscriptionExpiredOverlay } from '@/features/subscription/SubscriptionExpiredOverlay';
 import { useLogoutMutation } from '@/features/auth/authApi';
 import { BranchSwitcher } from '@/features/branches/BranchSwitcher';
 import { useGetTenantQuery, useGetBrandingQuery } from '@/features/tenants/tenantsApi';
@@ -43,6 +45,7 @@ export default function PosPage() {
   const branchId = useAppSelector(selectActiveBranchId);
   const branding = useAppSelector(selectBranding);
   const isManager = useAppSelector(selectIsManager);
+  const subscriptionExpired = useAppSelector(selectSubscriptionExpired);
   const online = useOnlineStatus();
   const [logout, { isLoading }] = useLogoutMutation();
 
@@ -58,7 +61,7 @@ export default function PosPage() {
     enabled: features.offlineMode,
   });
   // Flush any queued offline sales whenever we're online (Gold+).
-  const { flush } = useOfflineSaleSync({ enabled: features.offlineMode });
+  const { flush, pendingCount } = useOfflineSaleSync({ enabled: features.offlineMode });
 
   // The product whose batch picker is open (null = closed).
   const [picking, setPicking] = useState<Product | null>(null);
@@ -72,6 +75,7 @@ export default function PosPage() {
 
   return (
     <div className="flex h-screen flex-col">
+      {subscriptionExpired && <SubscriptionExpiredOverlay pendingCount={pendingCount} />}
       <header className="flex items-center justify-between border-b px-6 py-3">
         <div className="flex items-center gap-3">
           {branding?.logoUrl && (

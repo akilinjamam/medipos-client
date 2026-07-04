@@ -6,7 +6,8 @@ import {
   type FetchBaseQueryError,
 } from '@reduxjs/toolkit/query/react';
 import type { RootState } from '@/store/store';
-import { clearCredentials, setAccessToken } from '@/features/auth/authSlice';
+import { clearCredentials, setAccessToken, setSubscriptionExpired } from '@/features/auth/authSlice';
+import { apiErrorCode, SUBSCRIPTION_EXPIRED } from '@/lib/apiError';
 
 const API_ROOT = `${import.meta.env.VITE_API_URL}/api/v1`;
 
@@ -32,6 +33,12 @@ export const baseQueryWithReauth: BaseQueryFn<
   FetchBaseQueryError
 > = async (args, api, extraOptions) => {
   let result = await rawBaseQuery(args, api, extraOptions);
+
+  // Subscription enforcement: the server 402s every business route for lapsed
+  // tenants (auth + tenants stay exempt). The flag drives the blocking overlay.
+  if (result.error?.status === 402 && apiErrorCode(result.error) === SUBSCRIPTION_EXPIRED) {
+    api.dispatch(setSubscriptionExpired(true));
+  }
 
   if (result.error?.status === 401) {
     const refresh = await rawBaseQuery(
