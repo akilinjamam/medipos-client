@@ -26,6 +26,8 @@ export interface ReceiptData {
   /** Display label for the payment method, e.g. "Cash". */
   paymentMethod: string;
   footer?: string;
+  /** Maker byline ("MediPOS · © Byte Dynamo") — omitted for white-label tenants. */
+  poweredBy?: string;
   /** Thermal roll width in millimetres. */
   widthMm?: 58 | 80;
 }
@@ -109,6 +111,7 @@ function buildHtml(data: ReceiptData, width: number): string {
   </div>
   <hr />
   <div class="center muted">${data.footer ? esc(data.footer) : 'Thank you!'}</div>
+  ${data.poweredBy ? `<div class="center muted" style="font-size:9px;margin-top:2px">${esc(data.poweredBy)}</div>` : ''}
 </body>
 </html>`;
 }

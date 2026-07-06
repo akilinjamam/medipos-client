@@ -9,6 +9,7 @@ import { Loader2 } from 'lucide-react';
 import { useLoginMutation } from '@/features/auth/authApi';
 import { useAppSelector } from '@/store/hooks';
 import { apiErrorMessage } from '@/lib/apiError';
+import { copyrightLine } from '@/lib/company';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -129,6 +130,8 @@ export default function LoginPage() {
             </form>
           </CardContent>
         </Card>
+
+        <p className="mt-6 text-center text-xs text-muted-foreground/70">{copyrightLine()}</p>
       </motion.div>
     </div>
   );

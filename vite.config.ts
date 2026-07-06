@@ -38,7 +38,7 @@ export default defineConfig({
       manifest: {
         name: 'MediPOS Terminal',
         short_name: 'MediPOS',
-        description: 'Pharmacy POS terminal — offline-capable billing',
+        description: 'Pharmacy POS terminal — offline-capable billing, by Byte Dynamo',
         theme_color: '#0f172a',
         background_color: '#0f172a',
         display: 'standalone',

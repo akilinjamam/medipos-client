@@ -26,6 +26,48 @@ function persistActiveBranch(branchId: string | null): void {
   }
 }
 
+// Non-secret session snapshot so an OFFLINE reload doesn't log the cashier out
+// (load-shedding: PC reboots with no internet → the boot refresh can't run).
+// Deliberately excludes the access token (memory-only, unchanged); restoring
+// this only lets the UI boot — the 401→refresh flow re-auths on reconnect, and
+// an expired refresh cookie still lands on /login once online.
+const SESSION_CACHE_KEY = 'medipos.sessionCache';
+
+export interface SessionCache {
+  user: AuthUser;
+  plan: Plan | null;
+  branding: TenantBranding | null;
+}
+
+function persistSessionCache(state: AuthState): void {
+  try {
+    if (typeof localStorage === 'undefined' || !state.user) return;
+    const cache: SessionCache = { user: state.user, plan: state.plan, branding: state.branding };
+    localStorage.setItem(SESSION_CACHE_KEY, JSON.stringify(cache));
+  } catch {
+    // Ignore storage failures — offline reload just won't survive, as before.
+  }
+}
+
+export function loadSessionCache(): SessionCache | null {
+  try {
+    const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(SESSION_CACHE_KEY) : null;
+    if (!raw) return null;
+    const cache = JSON.parse(raw) as SessionCache;
+    return cache.user ? cache : null;
+  } catch {
+    return null;
+  }
+}
+
+export function clearSessionCache(): void {
+  try {
+    if (typeof localStorage !== 'undefined') localStorage.removeItem(SESSION_CACHE_KEY);
+  } catch {
+    // Ignore.
+  }
+}
+
 /**
  * Auth state for the POS terminal.
  *
@@ -60,6 +102,9 @@ export interface AuthState {
   initializing: boolean;
   /** Set when the API rejects with 402 SUBSCRIPTION_EXPIRED — blocks the POS until renewal. */
   subscriptionExpired: boolean;
+  /** Set when the API 503s with MAINTENANCE_MODE — full-screen maintenance takeover. */
+  maintenanceActive: boolean;
+  maintenanceMessage?: string;
 }
 
 const initialState: AuthState = {
@@ -70,6 +115,7 @@ const initialState: AuthState = {
   branding: null,
   initializing: true,
   subscriptionExpired: false,
+  maintenanceActive: false,
 };
 
 const authSlice = createSlice({
@@ -82,15 +128,18 @@ const authSlice = createSlice({
     ) {
       state.accessToken = action.payload.accessToken;
       state.user = action.payload.user;
+      persistSessionCache(state);
     },
     setAccessToken(state, action: PayloadAction<string | null>) {
       state.accessToken = action.payload;
     },
     setUser(state, action: PayloadAction<AuthUser | null>) {
       state.user = action.payload;
+      persistSessionCache(state);
     },
     setPlan(state, action: PayloadAction<Plan | null>) {
       state.plan = action.payload;
+      persistSessionCache(state);
     },
     setActiveBranch(state, action: PayloadAction<string | null>) {
       state.activeBranchId = action.payload;
@@ -98,9 +147,24 @@ const authSlice = createSlice({
     },
     setBranding(state, action: PayloadAction<TenantBranding | null>) {
       state.branding = action.payload;
+      persistSessionCache(state);
+    },
+    /**
+     * Boot-time offline restore: the refresh call failed with a NETWORK error
+     * (not a 401) and a cached snapshot exists — bring the session back with
+     * no access token so the POS can bill from the local catalog.
+     */
+    sessionRestored(state, action: PayloadAction<SessionCache>) {
+      state.user = action.payload.user;
+      state.plan = action.payload.plan;
+      state.branding = action.payload.branding;
     },
     setSubscriptionExpired(state, action: PayloadAction<boolean>) {
       state.subscriptionExpired = action.payload;
+    },
+    setMaintenance(state, action: PayloadAction<{ active: boolean; message?: string }>) {
+      state.maintenanceActive = action.payload.active;
+      state.maintenanceMessage = action.payload.message;
     },
     clearCredentials(state) {
       state.accessToken = null;
@@ -110,6 +174,7 @@ const authSlice = createSlice({
       state.branding = null;
       state.subscriptionExpired = false;
       persistActiveBranch(null);
+      clearSessionCache();
     },
     setInitializing(state, action: PayloadAction<boolean>) {
       state.initializing = action.payload;
@@ -125,6 +190,8 @@ export const {
   setActiveBranch,
   setBranding,
   setSubscriptionExpired,
+  setMaintenance,
+  sessionRestored,
   clearCredentials,
   setInitializing,
 } = authSlice.actions;
@@ -146,3 +213,7 @@ export const selectIsManager = (s: RootState) =>
 
 /** True while the server is 402-blocking the tenant (subscription lapsed). */
 export const selectSubscriptionExpired = (s: RootState) => s.auth.subscriptionExpired;
+
+/** True while the platform maintenance switch is on (server 503s everything). */
+export const selectMaintenanceActive = (s: RootState) => s.auth.maintenanceActive;
+export const selectMaintenanceMessage = (s: RootState) => s.auth.maintenanceMessage;

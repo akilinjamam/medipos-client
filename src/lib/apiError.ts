@@ -3,6 +3,9 @@ import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 /** 402 error code emitted by the server's subscription-enforcement middleware. */
 export const SUBSCRIPTION_EXPIRED = 'SUBSCRIPTION_EXPIRED';
 
+/** 503 error code emitted while the platform maintenance switch is on. */
+export const MAINTENANCE_MODE = 'MAINTENANCE_MODE';
+
 /** Server errors are shaped `{ error: { message, code, details } }` (errorHandler.ts). */
 interface ServerErrorBody {
   error?: { message?: string; code?: string; details?: unknown };
@@ -30,6 +33,16 @@ export function apiErrorMessage(err: unknown, fallback = 'Something went wrong')
 export function apiErrorStatus(err: unknown): number | undefined {
   const fbq = asFbqError(err);
   return fbq && typeof fbq.status === 'number' ? fbq.status : undefined;
+}
+
+/**
+ * True for transport-level failures — offline, DNS, or a hung server hitting
+ * the fetch timeout. Distinguishes "can't reach the server" from a real HTTP
+ * rejection (401 etc.), which matters for offline session restore.
+ */
+export function isNetworkError(err: unknown): boolean {
+  const fbq = asFbqError(err);
+  return fbq?.status === 'FETCH_ERROR' || fbq?.status === 'TIMEOUT_ERROR';
 }
 
 /** Machine-readable `error.code` from the server envelope (e.g. SUBSCRIPTION_EXPIRED). */

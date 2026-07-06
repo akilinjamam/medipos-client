@@ -88,7 +88,7 @@ export function CheckoutPanel({ branchId }: { branchId?: string }) {
     dueAmount: number;
   }): ReceiptData {
     return {
-      ...receiptBranding(branding),
+      ...receiptBranding(branding, features.whiteLabeling),
       cashierName,
       customerName: customer?.name,
       invoiceNo: opts.invoiceNo,

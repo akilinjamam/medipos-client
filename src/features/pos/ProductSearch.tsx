@@ -9,6 +9,8 @@ import {
 } from '@/features/products/productsApi';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
+import { useAppSelector } from '@/store/hooks';
+import { selectFeatures } from '@/features/auth/authSlice';
 import { getCachedProductByBarcode, searchCachedProducts } from '@/db/catalog';
 import { apiErrorMessage } from '@/lib/apiError';
 import { Input } from '@/components/ui/input';
@@ -26,19 +28,24 @@ export function ProductSearch({ onPick }: ProductSearchProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const online = useOnlineStatus();
 
-  // Online: live search the server. Offline: read the IndexedDB catalog cache.
+  const features = useAppSelector(selectFeatures);
+
+  // Online: live search the server. Offline — or when the server errors/times
+  // out while the plan includes offline mode (e.g. the API is reachable but
+  // its DB is down) — read the IndexedDB catalog cache instead.
   const { data, isFetching, isError, error } = useListProductsQuery(
     { search: search || undefined, limit: 20 },
     { skip: !online },
   );
+  const usingCache = !online || (isError && features.offlineMode);
   const cached = useLiveQuery(
-    () => (online ? undefined : searchCachedProducts(search, 20)),
-    [online, search],
+    () => (usingCache ? searchCachedProducts(search, 20) : undefined),
+    [usingCache, search],
   );
   const [lookupBarcode, { isFetching: isScanning }] = useLazyGetProductByBarcodeQuery();
 
-  const products: Product[] = online ? (data?.data ?? []) : (cached ?? []);
-  const loading = online ? isFetching : cached === undefined;
+  const products: Product[] = usingCache ? (cached ?? []) : (data?.data ?? []);
+  const loading = usingCache ? cached === undefined : isFetching;
 
   /**
    * Keyboard support:
@@ -75,7 +82,7 @@ export function ProductSearch({ onPick }: ProductSearchProps) {
 
     // Scanner path: try an exact barcode match first (server online, cache offline).
     try {
-      const product = online
+      const product = !usingCache
         ? await lookupBarcode(code).unwrap()
         : await getCachedProductByBarcode(code);
       if (product) {
@@ -118,8 +125,13 @@ export function ProductSearch({ onPick }: ProductSearchProps) {
         )}
       </div>
 
-      {online && isError && (
+      {online && isError && !usingCache && (
         <p className="text-sm text-destructive">{apiErrorMessage(error)}</p>
+      )}
+      {online && isError && usingCache && (
+        <p className="text-sm text-muted-foreground">
+          Server unreachable — selling from the cached catalog.
+        </p>
       )}
 
       <div className="flex flex-col gap-1.5">
@@ -156,9 +168,9 @@ export function ProductSearch({ onPick }: ProductSearchProps) {
           <p className="py-6 text-center text-sm text-muted-foreground">
             {search
               ? 'No medicines match your search.'
-              : online
-                ? 'No products in the catalog yet.'
-                : 'No cached products. Reconnect to sync the catalog.'}
+              : usingCache
+                ? 'No cached products. Reconnect to sync the catalog.'
+                : 'No products in the catalog yet.'}
           </p>
         )}
       </div>

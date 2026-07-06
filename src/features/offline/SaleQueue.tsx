@@ -17,7 +17,7 @@ import {
   retrySale,
 } from '@/db/saleQueue';
 import type { QueuedSale, QueuedSaleStatus } from '@/db/db';
-import { selectBranding } from '@/features/auth/authSlice';
+import { selectBranding, selectFeatures } from '@/features/auth/authSlice';
 import { receiptBranding } from '@/features/tenants/branding';
 import { useAppSelector } from '@/store/hooks';
 import { formatCurrency } from '@/lib/currency';
@@ -56,6 +56,7 @@ interface SaleQueueProps {
 export function SaleQueue({ open, onClose, online, onSyncNow }: SaleQueueProps) {
   const [filter, setFilter] = useState<Filter>('all');
   const branding = useAppSelector(selectBranding);
+  const features = useAppSelector(selectFeatures);
   const queue = useLiveQuery(() => (open ? getQueue() : []), [open]) ?? [];
 
   const counts = {
@@ -80,7 +81,7 @@ export function SaleQueue({ open, onClose, online, onSyncNow }: SaleQueueProps) 
   function handleReprint(q: QueuedSale) {
     const paid = q.payload.paidAmount ?? q.totalAmount;
     const ok = printReceipt({
-      ...receiptBranding(branding),
+      ...receiptBranding(branding, features.whiteLabeling),
       invoiceNo: q.saleId ?? q.clientUuid,
       dateIso: new Date(q.createdAt).toISOString(),
       lines: q.lines,

@@ -3,7 +3,8 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { CalendarClock, Loader2, PackageX } from 'lucide-react';
 import { useListBatchesQuery } from '@/features/batches/batchesApi';
 import { addLine } from '@/features/cart/cartSlice';
-import { useAppDispatch } from '@/store/hooks';
+import { selectFeatures } from '@/features/auth/authSlice';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { getCachedBatches } from '@/db/catalog';
 import { CrossBranchHint } from '@/features/pos/CrossBranchHint';
@@ -48,9 +49,12 @@ function formatDate(dateIso: string): string {
 export function BatchPicker({ product, branchId, onClose, onAdded }: BatchPickerProps) {
   const dispatch = useAppDispatch();
   const online = useOnlineStatus();
+  const features = useAppSelector(selectFeatures);
   const open = product !== null;
 
-  // Online: query the server. Offline: read this product's cached batches.
+  // Online: query the server. Offline — or when the server errors/times out
+  // while the plan includes offline mode (API reachable but its DB down) —
+  // read this product's cached batches instead.
   const {
     data: apiBatches,
     isFetching,
@@ -60,18 +64,19 @@ export function BatchPicker({ product, branchId, onClose, onAdded }: BatchPicker
     { productId: product?.id, branchId, inStock: true },
     { skip: !open || !branchId || !online },
   );
+  const usingCache = !online || (isError && features.offlineMode);
   const cachedBatches = useLiveQuery(
-    () => (open && !online && product ? getCachedBatches(product.id) : undefined),
-    [open, online, product],
+    () => (open && usingCache && product ? getCachedBatches(product.id) : undefined),
+    [open, usingCache, product],
   );
 
   // CachedBatch extends Batch, so the cache rows satisfy Batch[] for rendering.
-  const batches: Batch[] | undefined = online ? apiBatches : cachedBatches;
-  const loading = online ? isFetching : open && !online && cachedBatches === undefined;
+  const batches: Batch[] | undefined = usingCache ? cachedBatches : apiBatches;
+  const loading = usingCache ? open && cachedBatches === undefined : isFetching;
 
   // "Short" at this branch → offer the cross-branch availability hint (online).
   const currentTotal = (batches ?? []).reduce((n, b) => n + b.quantityInStock, 0);
-  const short = online && !loading && currentTotal <= LOW_STOCK_HINT;
+  const short = online && !usingCache && !loading && currentTotal <= LOW_STOCK_HINT;
 
   // `null` override means "use the FEFO default" (first batch, server-sorted).
   // Derived rather than synced via effect, and reset per-product by a `key` on
@@ -119,7 +124,7 @@ export function BatchPicker({ product, branchId, onClose, onAdded }: BatchPicker
             <Skeleton key={i} className="h-14 w-full" />
           ))}
         </div>
-      ) : online && isError ? (
+      ) : online && isError && !usingCache ? (
         <p className="py-6 text-center text-sm text-destructive">
           {apiErrorMessage(error)}
         </p>
@@ -127,9 +132,9 @@ export function BatchPicker({ product, branchId, onClose, onAdded }: BatchPicker
         <div className="flex flex-col items-center gap-2 py-8 text-center text-muted-foreground">
           <PackageX className="size-6" />
           <p className="text-sm">
-            {online
-              ? 'No in-stock batches for this product at this branch.'
-              : 'No cached batches for this product. Reconnect to sync.'}
+            {usingCache
+              ? 'No cached batches for this product. Reconnect to sync.'
+              : 'No in-stock batches for this product at this branch.'}
           </p>
         </div>
       ) : (
