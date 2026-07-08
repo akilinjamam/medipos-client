@@ -202,7 +202,7 @@ export function CheckoutPanel({ branchId }: { branchId?: string }) {
     try {
       const sale = await createSale(body).unwrap();
       const receipt = buildReceipt({
-        invoiceNo: sale.id,
+        invoiceNo: sale.invoiceNo ?? sale.id,
         dateIso: sale.createdAt,
         paidAmount: sale.paidAmount,
         dueAmount: sale.dueAmount,

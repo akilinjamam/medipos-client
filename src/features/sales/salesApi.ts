@@ -1,4 +1,8 @@
 import { baseApi } from '@/store/api/baseApi';
+import {
+  invoicePdfResponseHandler,
+  type InvoicePdfResult,
+} from '@/lib/printInvoicePdf';
 import type {
   BulkSyncResult,
   CreateReturnBody,
@@ -8,7 +12,6 @@ import type {
   Paginated,
   Sale,
   SaleReturn,
-  StoredObject,
 } from '@/types/api';
 
 export interface ListReturnsArgs {
@@ -57,10 +60,10 @@ export const salesApi = baseApi.injectEndpoints({
       providesTags: ['Sale'],
     }),
 
-    // GET /api/v1/sales/:id/invoice — generates + stores the PDF, returns its URL.
-    getInvoice: builder.query<StoredObject, string>({
-      query: (id) => ({ url: `/sales/${id}/invoice` }),
-      transformResponse: (res: Envelope<StoredObject>) => res.data,
+    // GET /api/v1/sales/:id/invoice — generates the PDF. Returns a stored URL
+    // (S3) or the raw bytes (no S3) — see invoicePdfResponseHandler.
+    generateInvoice: builder.mutation<InvoicePdfResult, string>({
+      query: (id) => ({ url: `/sales/${id}/invoice`, responseHandler: invoicePdfResponseHandler }),
     }),
 
     // POST /api/v1/sales/bulk-sync — flush the offline queue (Gold+, idempotent
@@ -106,7 +109,7 @@ export const {
   useCreateSaleMutation,
   useListSalesQuery,
   useGetSaleQuery,
-  useLazyGetInvoiceQuery,
+  useGenerateInvoiceMutation,
   useBulkSyncMutation,
   useCreateReturnMutation,
   useListReturnsQuery,

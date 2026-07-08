@@ -8,14 +8,15 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
+  useGenerateInvoiceMutation,
   useGetSaleQuery,
-  useLazyGetInvoiceQuery,
   useListSalesQuery,
 } from '@/features/sales/salesApi';
 import { ReturnDialog } from '@/features/sales/ReturnDialog';
 import { selectIsManager } from '@/features/auth/authSlice';
 import { useAppSelector } from '@/store/hooks';
 import { apiErrorMessage } from '@/lib/apiError';
+import { printInvoicePdf } from '@/lib/printInvoicePdf';
 import { formatCurrency } from '@/lib/currency';
 import { formatDateTime } from '@/lib/datetime';
 import { Modal } from '@/components/ui/modal';
@@ -50,17 +51,13 @@ function ReturnBadge({ status }: { status: ReturnStatus }) {
   );
 }
 
-/** Reusable invoice opener — opens the S3 PDF; local-disk has no public URL. */
-function useOpenInvoice() {
-  const [fetchInvoice] = useLazyGetInvoiceQuery();
+/** Reusable invoice printer — the POS only prints the PDF, never downloads it. */
+function usePrintInvoice() {
+  const [generateInvoice] = useGenerateInvoiceMutation();
   return async (saleId: string) => {
     try {
-      const stored = await fetchInvoice(saleId).unwrap();
-      if (stored.storage === 's3' && /^https?:/.test(stored.url)) {
-        window.open(stored.url, '_blank', 'noopener');
-      } else {
-        toast.info('Invoice generated on the server (local storage — no public URL).');
-      }
+      const result = await generateInvoice(saleId).unwrap();
+      await printInvoicePdf(result);
     } catch (err) {
       toast.error(apiErrorMessage(err, 'Could not generate the invoice.'));
     }
@@ -218,7 +215,7 @@ function SaleDetail({
   onClose: () => void;
 }) {
   const { data: sale, isFetching, isError, error } = useGetSaleQuery(saleId, { skip: !open });
-  const openInvoice = useOpenInvoice();
+  const printInvoice = usePrintInvoice();
   const isManager = useAppSelector(selectIsManager);
   const [invoicing, setInvoicing] = useState(false);
   const [returnOpen, setReturnOpen] = useState(false);
@@ -228,7 +225,7 @@ function SaleDetail({
 
   async function handleInvoice() {
     setInvoicing(true);
-    await openInvoice(saleId);
+    await printInvoice(saleId);
     setInvoicing(false);
   }
 
@@ -237,7 +234,11 @@ function SaleDetail({
       open={open}
       onClose={onClose}
       title="Sale detail"
-      description={sale ? formatDateTime(sale.createdAt) : undefined}
+      description={
+        sale
+          ? [sale.invoiceNo, formatDateTime(sale.createdAt)].filter(Boolean).join(' · ')
+          : undefined
+      }
     >
       {isFetching ? (
         <div className="flex flex-col gap-2">

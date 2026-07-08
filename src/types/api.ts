@@ -163,6 +163,8 @@ export interface SaleItem {
 export interface Sale {
   id: string;
   tenantId: string;
+  /** Customer-facing sequential number (`INV-000042`); absent on pre-feature sales. */
+  invoiceNo?: string;
   branchId: string;
   cashierId: string;
   customerId?: string;
