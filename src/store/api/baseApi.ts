@@ -19,6 +19,7 @@ import {
   MAINTENANCE_MODE,
   SUBSCRIPTION_EXPIRED,
 } from '@/lib/apiError';
+import { reportNetworkError } from '@/lib/connectivity';
 
 const API_ROOT = `${import.meta.env.VITE_API_URL}/api/v1`;
 
@@ -48,6 +49,11 @@ export const baseQueryWithReauth: BaseQueryFn<
 > = async (args, api, extraOptions) => {
   let result = await rawBaseQuery(args, api, extraOptions);
 
+  // Feed the connectivity store: a transport-level failure means the server
+  // is unreachable no matter what navigator.onLine claims (live LAN, dead
+  // internet). This is the fastest offline signal the POS gets.
+  if (isNetworkError(result.error)) reportNetworkError();
+
   // Subscription enforcement: the server 402s every business route for lapsed
   // tenants (auth + tenants stay exempt). The flag drives the blocking overlay.
   if (result.error?.status === 402 && apiErrorCode(result.error) === SUBSCRIPTION_EXPIRED) {
@@ -73,10 +79,12 @@ export const baseQueryWithReauth: BaseQueryFn<
     if (newToken) {
       api.dispatch(setAccessToken(newToken));
       result = await rawBaseQuery(args, api, extraOptions);
-    } else if (!isNetworkError(refresh.error)) {
-      // Only a real auth rejection ends the session. A network/timeout failure
-      // (offline mid-shift, server DB down) keeps the restored session alive —
-      // the next reconnect retries the refresh.
+    } else if (isNetworkError(refresh.error)) {
+      // A network/timeout failure (offline mid-shift, server DB down) keeps
+      // the restored session alive — the next reconnect retries the refresh.
+      reportNetworkError();
+    } else {
+      // Only a real auth rejection ends the session.
       api.dispatch(clearCredentials());
     }
   }
