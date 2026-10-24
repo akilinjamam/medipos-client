@@ -10,7 +10,9 @@ const ACTIVE_BRANCH_KEY = 'medipos.activeBranchId';
 
 function loadActiveBranch(): string | null {
   try {
-    return typeof localStorage !== 'undefined' ? localStorage.getItem(ACTIVE_BRANCH_KEY) : null;
+    return typeof localStorage !== 'undefined'
+      ? localStorage.getItem(ACTIVE_BRANCH_KEY)
+      : null;
   } catch {
     return null;
   }
@@ -42,7 +44,11 @@ export interface SessionCache {
 function persistSessionCache(state: AuthState): void {
   try {
     if (typeof localStorage === 'undefined' || !state.user) return;
-    const cache: SessionCache = { user: state.user, plan: state.plan, branding: state.branding };
+    const cache: SessionCache = {
+      user: state.user,
+      plan: state.plan,
+      branding: state.branding,
+    };
     localStorage.setItem(SESSION_CACHE_KEY, JSON.stringify(cache));
   } catch {
     // Ignore storage failures — offline reload just won't survive, as before.
@@ -51,7 +57,10 @@ function persistSessionCache(state: AuthState): void {
 
 export function loadSessionCache(): SessionCache | null {
   try {
-    const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(SESSION_CACHE_KEY) : null;
+    const raw =
+      typeof localStorage !== 'undefined'
+        ? localStorage.getItem(SESSION_CACHE_KEY)
+        : null;
     if (!raw) return null;
     const cache = JSON.parse(raw) as SessionCache;
     return cache.user ? cache : null;
@@ -87,6 +96,7 @@ export interface AuthUser {
   email?: string;
   role: Role;
   branchId?: string;
+  code?: string;
 }
 
 export interface AuthState {

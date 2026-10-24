@@ -27,7 +27,7 @@ const TENANT_KEY = 'medipos.lastTenantId';
 // tenantId is the pharmacy's login code (e.g. "MP-4K7TQ2"); the server also
 // accepts a legacy 24-char ObjectId, so saved values keep working.
 const loginSchema = z.object({
-  tenantId: z.string().trim().min(3, 'Enter your pharmacy code'),
+  tenantId: z.string().trim().optional(),
   phone: z.string().min(3, 'Enter your phone number'),
   password: z.string().min(1, 'Enter your password'),
 });
@@ -59,8 +59,8 @@ export default function LoginPage() {
 
   const onSubmit = async (values: LoginValues) => {
     try {
-      await login(values).unwrap();
-      localStorage.setItem(TENANT_KEY, values.tenantId);
+      const res = await login(values).unwrap();
+      localStorage.setItem(TENANT_KEY, res.user.tenantId as string);
       navigate('/', { replace: true });
     } catch (err) {
       toast.error(apiErrorMessage(err, 'Login failed'));
@@ -81,7 +81,7 @@ export default function LoginPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <Label htmlFor="tenantId">Pharmacy Code</Label>
                 <Input
                   id="tenantId"
@@ -93,7 +93,7 @@ export default function LoginPage() {
                 {errors.tenantId && (
                   <p className="text-xs text-destructive">{errors.tenantId.message}</p>
                 )}
-              </div>
+              </div> */}
 
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone</Label>
@@ -131,7 +131,9 @@ export default function LoginPage() {
           </CardContent>
         </Card>
 
-        <p className="mt-6 text-center text-xs text-muted-foreground/70">{copyrightLine()}</p>
+        <p className="mt-6 text-center text-xs text-muted-foreground/70">
+          {copyrightLine()}
+        </p>
       </motion.div>
     </div>
   );

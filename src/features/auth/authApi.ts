@@ -13,7 +13,7 @@ interface Envelope<T> {
 }
 
 export interface LoginRequest {
-  tenantId: string;
+  tenantId?: string;
   phone: string;
   password: string;
 }
@@ -66,9 +66,5 @@ export const authApi = baseApi.injectEndpoints({
   }),
 });
 
-export const {
-  useLoginMutation,
-  useRefreshMutation,
-  useGetMeQuery,
-  useLogoutMutation,
-} = authApi;
+export const { useLoginMutation, useRefreshMutation, useGetMeQuery, useLogoutMutation } =
+  authApi;
