@@ -1,0 +1,33 @@
+# Dependency directories
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Local environment and secret files
+.env
+.env.local
+.env.*.local
+
+# Git version control
+.git
+.gitignore
+
+# Build outputs and caches
+dist
+build
+.next
+.cache
+
+# IDE and OS specific files
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+# Documentation and testing
+README.md
+tests
+__tests__
+coverage

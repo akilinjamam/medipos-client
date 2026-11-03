@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  medipos-client:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=https://server.mediposbd.com  # <--- Replace with your actual production API URL
+    container_name: medipos-client-container
+    ports:
+      - "3008:80"
+    restart: unless-stopped
