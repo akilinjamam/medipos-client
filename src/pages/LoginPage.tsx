@@ -76,7 +76,7 @@ export default function LoginPage() {
       >
         <Card>
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">MediPOS Bodda</CardTitle>
+            <CardTitle className="text-2xl">MediPOS</CardTitle>
             <CardDescription>Counter terminal sign-in</CardDescription>
           </CardHeader>
           <CardContent>
