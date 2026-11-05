@@ -1,32 +1,34 @@
-name: Deploy
+name: Deploy React Vite App to VPS
 
 on:
   push:
-    branches:
-      - main
+    branches: [ "main" ] # Update if your default branch is master
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies & Build
+        run: |
+          npm ci
+          npm run build
+
+      - name: Copy build files to VPS via SSH
+        uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_KEY }}
-          port: 22
-          script: |
-            cd /www/wwwroot/medipos-client
-
-            echo "Pulling latest changes from GitHub..."
-            git pull origin main
-
-            echo "Installing dependencies..."
-            npm install
-
-            echo "Building application..."
-            npm run build
-
-            echo "Deployment completed successfully!"
+          source: "dist/*"
+          target: "/var/www/wwwroot/medipos-client"
+          strip_components: 1
