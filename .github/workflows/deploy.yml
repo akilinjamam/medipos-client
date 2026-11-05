@@ -26,6 +26,9 @@ jobs:
             echo "Installing dependencies..."
             npm install
 
+            echo "Cleaning up dist issue..."
+            rm -rf dist
+
             echo "Building application..."
             npm run build
 
